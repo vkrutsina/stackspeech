@@ -57,7 +57,6 @@ var langs = [
   ['Türkçe', ['tr-TR']],
   ['български', ['bg-BG']],
   ['Pусский', ['ru-RU']],
-  ['Српски', ['sr-RS']],
   ['한국어', ['ko-KR']],
   [
     '中文',
@@ -84,10 +83,8 @@ function updateCountry() {
   for (var i = 1; i < list.length; i++) {
     select_dialect.options.add(new Option(list[i][1], list[i][0]));
   }
-  select_dialect.style.visibility =
-    list[1].length == 1 ? 'hidden' : 'visible';
+  select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
 }
-var create_email = false;
 var final_transcript = '';
 var recognizing = false;
 var ignore_onend;
@@ -141,10 +138,6 @@ if (!('webkitSpeechRecognition' in window)) {
       range.selectNode(document.getElementById('final_span'));
       window.getSelection().addRange(range);
     }
-    if (create_email) {
-      create_email = false;
-      createEmail();
-    }
   };
   recognition.onresult = function(event) {
     var interim_transcript = '';
@@ -156,6 +149,8 @@ if (!('webkitSpeechRecognition' in window)) {
       }
     }
     final_transcript = capitalize(final_transcript);
+    ////////////////////////////
+    console.log('final_strans', final_transcript);
     final_span.innerHTML = linebreak(final_transcript);
     interim_span.innerHTML = linebreak(interim_transcript);
     if (final_transcript || interim_transcript) {
@@ -178,36 +173,7 @@ function capitalize(s) {
     return m.toUpperCase();
   });
 }
-function createEmail() {
-  var n = final_transcript.indexOf('\n');
-  if (n < 0 || n >= 80) {
-    n = 40 + final_transcript.substring(40).indexOf(' ');
-  }
-  var subject = encodeURI(final_transcript.substring(0, n));
-  var body = encodeURI(final_transcript.substring(n + 1));
-  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
-}
-// function copyButton() {
-//   if (recognizing) {
-//     recognizing = false;
-//     recognition.stop();
-//   }
-//   copy_button.style.display = 'none';
-//   copy_info.style.display = 'inline-block';
-//   showInfo('');
-// }
-// function emailButton() {
-//   if (recognizing) {
-//     create_email = true;
-//     recognizing = false;
-//     recognition.stop();
-//   } else {
-//     createEmail();
-//   }
-//   email_button.style.display = 'none';
-//   email_info.style.display = 'inline-block';
-//   showInfo('');
-// }
+
 function startButton(event) {
   if (recognizing) {
     recognition.stop();
@@ -247,3 +213,5 @@ function showButtons(style) {
   // copy_info.style.display = 'none';
   // email_info.style.display = 'none';
 }
+
+console.log;

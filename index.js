@@ -63,3 +63,7 @@ startButton.addEventListener("click", function() {
   })
   .catch(log);
 }, false);
+
+stopButton.addEventListener("click", function() {
+  stop(preview.srcObject);
+}, false);

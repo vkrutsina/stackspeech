@@ -148,7 +148,6 @@ if (!('webkitSpeechRecognition' in window)) {
         interim_transcript += event.results[i][0].transcript;
       }
     }
-    final_transcript = capitalize(final_transcript);
     ////////////////////////////
     console.log('final_strans', final_transcript);
     final_span.innerHTML = linebreak(final_transcript);
@@ -214,4 +213,74 @@ function showButtons(style) {
   // email_info.style.display = 'none';
 }
 
-console.log;
+console.log('finalTrans', final_transcript);
+
+const expression = final_transcript;
+
+const lex = str =>
+  str
+    .split(' ')
+    .map(s => s.trim())
+    .filter(s => s.length);
+
+const Op = Symbol('op');
+const Num = Symbol('num');
+
+const parse = tokens => {
+  let c = 0;
+  const peek = () => tokens[c];
+  const consume = () => tokens[c++];
+
+  const parseNum = () => ({ val: parseInt(consume()), type: Num });
+
+  const parseOp = () => {
+    const node = { val: consume(), type: Op, expr: [] };
+    while (peek()) node.expr.push(parseExpr());
+    //this line allows us to work with expressions that have two ops in a row.
+    return node;
+  };
+
+  const parseExpr = () => (/\d/.test(peek()) ? parseNum() : parseOp());
+  return parseExpr();
+};
+
+const evaluate = ast => {
+  const opRedMap = {
+    add: args => args.reduce((a, b) => a + b, 0),
+    sum: args => args.reduce((a, b) => a + b, 0),
+    subtract: args => args.reduce((a, b) => a - b),
+    divide: args => args.reduce((a, b) => a / b),
+    multiply: args => args.reduce((a, b) => a * b, 1),
+    by: args => args.reduce((a, b) => a * b, 1),
+  };
+  if (ast.type === Num) return ast.val;
+  return opRedMap[ast.val](ast.expr.map(evaluate));
+};
+
+const compile = ast => {
+  const opObject = {
+    sum: '+',
+    add: '+',
+    multiply: '*',
+    subtract: '-',
+    divide: '/',
+  };
+  const compileNum = ast => ast.val;
+  const compileOp = ast =>
+    `(${ast.expr.map(compile).join(' ' + opObject[ast.val] + ' ')})`;
+  const compileNode = ast =>
+    ast.type === Num ? compileNum(ast) : compileOp(ast);
+  return compileNode(ast);
+};
+
+const lexer = lex(expression);
+console.log('lexer:', lexer);
+const parsedLex = parse(lexer);
+console.log('parsedLex:', parsedLex);
+const evaluated = evaluate(parsedLex);
+console.log('evaluated', evaluated);
+const compiled = compile(parsedLex);
+console.log('compiled', compiled);
+
+console.log(evaluated);
+console.log(compiled);

@@ -156,7 +156,7 @@ if (!('webkitSpeechRecognition' in window)) {
     final_span.innerHTML = linebreak(final_transcript);
     interim_span.innerHTML = linebreak(interim_transcript);
     if (final_transcript) {
-      const firstExpression = final_transcript;
+      const firstExpression = final_transcript.toLowerCase();
 
       let importantWords = [
         'multiply',
@@ -165,6 +165,7 @@ if (!('webkitSpeechRecognition' in window)) {
         'sum',
         'subtract',
         'quotient',
+        'умножь',
       ];
 
       const lex = str =>
@@ -201,6 +202,7 @@ if (!('webkitSpeechRecognition' in window)) {
           subtract: args => args.reduce((a, b) => a - b),
           divide: args => args.reduce((a, b) => a / b),
           multiply: args => args.reduce((a, b) => a * b, 1),
+          умножь: args => args.reduce((a, b) => a * b, 1),
           by: args => args.reduce((a, b) => a * b, 1),
         };
         console.log('ASST', ast);
@@ -214,7 +216,6 @@ if (!('webkitSpeechRecognition' in window)) {
         .filter(each => importantWords.includes(each) || Number(each))
         .join(' ');
 
-      // const expression = element.join(' ')
       console.log('expression', expression);
 
       const lexer = lex(expression);

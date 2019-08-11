@@ -86,7 +86,8 @@ function updateCountry() {
   select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
 }
 var final_transcript = '';
-let finalCalc = '';
+let finalCalc = document.getElementById('final_calc');
+console.log('finalCAlc', document.getElementById('final_calc').innerHTML);
 var recognizing = false;
 var ignore_onend;
 var start_timestamp;
@@ -202,6 +203,8 @@ if (!('webkitSpeechRecognition' in window)) {
           multiply: args => args.reduce((a, b) => a * b, 1),
           by: args => args.reduce((a, b) => a * b, 1),
         };
+        console.log('ASST', ast);
+        console.log('asssVAL', ast.val);
         if (ast.type === Num) return ast.val;
         return opRedMap[ast.val](ast.expr.map(compile));
       };
@@ -220,6 +223,7 @@ if (!('webkitSpeechRecognition' in window)) {
       console.log('parsedLex', parsedLex);
       const compiled = compile(parsedLex);
       console.log('evals', compiled);
+      document.getElementById('final_calc').innerHTML = compiled;
     }
   };
 }

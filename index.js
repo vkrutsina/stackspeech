@@ -86,6 +86,7 @@ function updateCountry() {
   select_dialect.style.visibility = list[1].length == 1 ? 'hidden' : 'visible';
 }
 var final_transcript = '';
+let finalCalc = '';
 var recognizing = false;
 var ignore_onend;
 var start_timestamp;
@@ -140,6 +141,7 @@ if (!('webkitSpeechRecognition' in window)) {
     }
   };
   recognition.onresult = function(event) {
+    console.log('event', event);
     var interim_transcript = '';
     for (var i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
@@ -152,8 +154,72 @@ if (!('webkitSpeechRecognition' in window)) {
     console.log('final_strans', final_transcript);
     final_span.innerHTML = linebreak(final_transcript);
     interim_span.innerHTML = linebreak(interim_transcript);
-    if (final_transcript || interim_transcript) {
-      showButtons('inline-block');
+    if (final_transcript) {
+      const firstExpression = final_transcript;
+
+      let importantWords = [
+        'multiply',
+        'add',
+        'divide',
+        'sum',
+        'subtract',
+        'quotient',
+      ];
+
+      const lex = str =>
+        str
+          .split(' ')
+          .map(s => s.trim())
+          .filter(s => s.length);
+
+      const Op = Symbol('op');
+      const Num = Symbol('num');
+
+      const parse = tokens => {
+        let c = 0;
+        const current = () => tokens[c];
+        const next = () => tokens[c++];
+
+        const parseNum = () => ({ val: parseInt(next()), type: Num });
+
+        const parseOp = () => {
+          const node = { val: next(), type: Op, expr: [] };
+          while (current()) node.expr.push(parseExpr());
+          //this line allows us to work with expressions that have two ops in a row.
+          return node;
+        };
+
+        const parseExpr = () => (/\d/.test(current()) ? parseNum() : parseOp());
+        return parseExpr();
+      };
+
+      const compile = ast => {
+        const opRedMap = {
+          add: args => args.reduce((a, b) => a + b, 0),
+          sum: args => args.reduce((a, b) => a + b, 0),
+          subtract: args => args.reduce((a, b) => a - b),
+          divide: args => args.reduce((a, b) => a / b),
+          multiply: args => args.reduce((a, b) => a * b, 1),
+          by: args => args.reduce((a, b) => a * b, 1),
+        };
+        if (ast.type === Num) return ast.val;
+        return opRedMap[ast.val](ast.expr.map(compile));
+      };
+
+      const element = firstExpression.split(' ');
+      const expression = element
+        .filter(each => importantWords.includes(each) || Number(each))
+        .join(' ');
+
+      // const expression = element.join(' ')
+      console.log('expression', expression);
+
+      const lexer = lex(expression);
+      console.log('ex', lexer);
+      const parsedLex = parse(lexer);
+      console.log('parsedLex', parsedLex);
+      const compiled = compile(parsedLex);
+      console.log('evals', compiled);
     }
   };
 }
@@ -214,73 +280,3 @@ function showButtons(style) {
 }
 
 console.log('finalTrans', final_transcript);
-
-const expression = final_transcript;
-
-const lex = str =>
-  str
-    .split(' ')
-    .map(s => s.trim())
-    .filter(s => s.length);
-
-const Op = Symbol('op');
-const Num = Symbol('num');
-
-const parse = tokens => {
-  let c = 0;
-  const peek = () => tokens[c];
-  const consume = () => tokens[c++];
-
-  const parseNum = () => ({ val: parseInt(consume()), type: Num });
-
-  const parseOp = () => {
-    const node = { val: consume(), type: Op, expr: [] };
-    while (peek()) node.expr.push(parseExpr());
-    //this line allows us to work with expressions that have two ops in a row.
-    return node;
-  };
-
-  const parseExpr = () => (/\d/.test(peek()) ? parseNum() : parseOp());
-  return parseExpr();
-};
-
-const evaluate = ast => {
-  const opRedMap = {
-    add: args => args.reduce((a, b) => a + b, 0),
-    sum: args => args.reduce((a, b) => a + b, 0),
-    subtract: args => args.reduce((a, b) => a - b),
-    divide: args => args.reduce((a, b) => a / b),
-    multiply: args => args.reduce((a, b) => a * b, 1),
-    by: args => args.reduce((a, b) => a * b, 1),
-  };
-  if (ast.type === Num) return ast.val;
-  return opRedMap[ast.val](ast.expr.map(evaluate));
-};
-
-const compile = ast => {
-  const opObject = {
-    sum: '+',
-    add: '+',
-    multiply: '*',
-    subtract: '-',
-    divide: '/',
-  };
-  const compileNum = ast => ast.val;
-  const compileOp = ast =>
-    `(${ast.expr.map(compile).join(' ' + opObject[ast.val] + ' ')})`;
-  const compileNode = ast =>
-    ast.type === Num ? compileNum(ast) : compileOp(ast);
-  return compileNode(ast);
-};
-
-const lexer = lex(expression);
-console.log('lexer:', lexer);
-const parsedLex = parse(lexer);
-console.log('parsedLex:', parsedLex);
-const evaluated = evaluate(parsedLex);
-console.log('evaluated', evaluated);
-const compiled = compile(parsedLex);
-console.log('compiled', compiled);
-
-console.log(evaluated);
-console.log(compiled);
